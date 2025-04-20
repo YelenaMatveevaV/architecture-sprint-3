@@ -1,0 +1,17 @@
+site_name: My Docs
+theme: readthedocs
+markdown_extensions:
+  - md_in_html
+  - plantuml_markdown
+plugins:
+  - search 
+  - plantuml:
+      puml_url: https://www.plantuml.com/plantuml/ 
+nav:
+  - Home: index.md
+  - Architecture:
+      - ER_Diagram: architecture/ER.md
+      - Component: architecture/component.md
+      - Container: architecture/container.md
+      - Context: architecture/context.md
+      - Code: architecture/code.md

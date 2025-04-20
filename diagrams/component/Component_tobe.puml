@@ -1,0 +1,134 @@
+@startuml
+title WarmHouse Component Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(WarmHouse, "WarmHouse as SaaS") {
+  Container(WebApp, "Web WarmHouse", "Java, Spring", "Просмотр сведений, команды")
+  Container(MobileApp, "Mobile WarmHouse", "Kotlin, Swift", "Управление приборами, профилем, сценариями, просмотр сведений")
+
+  Container(PostgreSQL, "PostgreSQL", "PostgreSQL", "Справочники, данные, схема")
+  Container(Redis, "Redis", "Redis", "Кэширование")
+  Container(MongoDB, "MongoDB", "MongoDB", "Сценарии использования приборов")
+
+  Container(ApiGateway, "ApiGateway", "APISIX Gateway", "Маршрутизация, аутентификация")
+  Container(VideoGateway, "VideoGateway", "Video Gateway", "Маршрутизация, аутентификация")
+  Container(Config, "Configuration", "Consul, Consul-kv", "Конфигурации")
+  Container(GatewaySevice, "GatewaySevice", "Go/Python", "Общение с IoT устройствами по протоколам MQTT, HTTP")
+  
+  Container(UserManagement, "UserManagement", "Java/Go", "Регистрация, роли, профили, аутентификация и авторизация")
+  Container(DeviceManagement, "DeviceManagement", "Java/Python", "Подключение устройств, хранение метаданных, REST API управления устройствами")
+  Container(ScenarioEngine, "ScenarioEngine", "Node.js/Python", "Создание и выполнение правил, интеграция с сервисом погоды")
+  Container(Telemetry, "Telemetry", "Python/Java", "Сбор данных с устройств, аналитика, хранение истории")
+  
+  Container(MessageBroker, "MessageBroker", "Kafka", "Асинхронная коммуникация между сервисами")
+
+}
+
+Container(WebApp, "Web WarmHouse", "Java, Spring"){
+  Component(AuthController, "AuthController", "Аутентификация и авторизация")
+  Component(UserController, "UserController", "Управление профилем пользователя")
+  Component(DeviceController, "DeviceController", "Управление приборами")
+  Component(PushInfo, "PushInfo", "Push-уведомление")
+  Component(ScenarioController, "ScenarioController", "Добавление сценариев")
+  Component(AnaliticReport, "AnaliticReport", "Аналитические отчеты")
+}
+
+Rel(AuthController,ApiGateway,"Вызов операций API")
+Rel(UserController,ApiGateway,"Вызов операций API")
+Rel(DeviceController,ApiGateway,"Вызов операций API")
+Rel(PushInfo,ApiGateway,"Вызов операций API")
+Rel(ScenarioController,ApiGateway,"Вызов операций API")
+Rel(AnaliticReport,ApiGateway,"Вызов операций API")
+
+Container(MobileApp, "Mobile WarmHouse", "Kotlin, Swift"){
+  Component(AuthControllerMob, "AuthControllerMob", "Аутентификация и авторизация")
+  Component(UserControllerMob, "UserControllerMob", "Управление профилем пользователя")
+  Component(DeviceControllerMob, "DeviceControllerMob", "Управление приборами")
+  Component(PushInfoMob, "PushInfoMob", "Push-уведомление")
+}
+
+Rel(AuthControllerMob,ApiGateway,"Вызов операций API")
+Rel(UserControllerMob,ApiGateway,"Вызов операций API")
+Rel(DeviceControllerMob,ApiGateway,"Вызов операций API")
+Rel(PushInfoMob,ApiGateway,"Вызов операций API")
+
+Container(GatewaySevice, "GatewaySevice", "Go/Python"){
+  Component(MQTTAdapter, "MQTTAdapter", "Адаптер MQTT")
+  Component(HTTPAdapter, "HTTPAdapter", "Адаптер HTTP")
+  Component(CoAPAdapter, "CoAPAdapter", "Адаптер CoAP")
+}
+
+Rel(ApiGateway,Redis,"Кеширование")
+Rel(UserManagement,PostgreSQL,"Хранение данных пользователей, ролей, профилей")
+Rel(DeviceManagement,PostgreSQL,"Метаданные приборов")
+Rel(Telemetry,PostgreSQL,"Хранение данных, истории")
+Rel(ScenarioEngine,MongoDB,"Сценарии использования приборов")
+
+Container(UserManagement, "UserManagement", "Java/Go"){
+  Component(DataAccessSQL, "DataAccessSQL", "Чтение/запись данных PostgreSQL")
+  Component(AuthComponent, "AuthComponent", "Аутентификация пользователей")
+  Component(UserProfile, "UserProfile", "Управление профилем")
+  Component(UserRole, "UserRole", "Управление ролью")
+}
+
+Rel(UserProfile,DataAccessSQL,"Чтение/запись данных")
+Rel(UserRole,DataAccessSQL,"Чтение/запись данных")
+Rel(DataAccessSQL,PostgreSQL,"Чтение/запись данных")
+
+Container(DeviceManagement, "DeviceManagement", "Java/Python"){
+  Component(DataAccessSQL, "DataAccessSQL", "Чтение/запись данных PostgreSQL")
+  Component(DevCard, "DevCard", "Карточка прибора")
+  Component(DevStatus, "DevStatus", "Подключение, статус прибора")
+}
+Rel(DevCard,DataAccessSQL,"Чтение/запись данных")
+Rel(DevStatus,DataAccessSQL,"Чтение/запись данных")
+Rel(DataAccessSQL,PostgreSQL,"Чтение/запись данных")
+ 
+Container(ScenarioEngine, "ScenarioEngine", "Node.js/Python"){
+  Component(DataAccessMongo, "DataAccessMongo", "Чтение/запись данных MongoDB")
+  Component(DataAccessSQL, "DataAccessSQL", "Чтение/запись данных PostgreSQL")
+  Component(ScenarioCard, "ScenarioCard", "Редактирование сценария, генерация команд")
+  Component(ScenarioAction, "ScenarioAction", "Выполнение сценария")
+  Component(WetherIntegrated, "WetherIntegrated", "Интеграция с сервисом погоды")  
+}
+
+Rel(ScenarioCard,DataAccessMongo,"Чтение/запись данных")
+Rel(ScenarioCard,DataAccessSQL,"Чтение/запись сведений ")
+Rel(ScenarioAction,ApiGateway,"Команды приборам")
+Rel(ScenarioAction,WetherIntegrated,"Получение прогноза погоды")
+Rel(DataAccessMongo,MongoDB,"Чтение/запись данных")
+Rel(DataAccessSQL,PostGreSQL,"Чтение/запись данных")
+  
+Container(Telemetry, "Telemetry", "Python/Java"){
+  Component(DataAccessSQL, "DataAccessSQL", "Чтение/запись данных PostgreSQL")
+  Component(GetData, "GetData", "Получение данных с прибора")
+  Component(GetReport, "GetReport", "Подготовка отчета")
+}
+Rel(DataAccessSQL,PostGreSQL,"Чтение/запись данных")
+Rel(GetData,ApiGateway,"Получение данных с приборов")
+Rel(GetData,DataAccessSQL,"Чтение/запись данных")
+Rel(GetReport,DataAccessSQL,"Чтение/запись данных")
+Rel(GetReport,ApiGateway,"Отправка отчета")
+
+Rel(MobileApp,ApiGateway,"REST API")
+Rel(WebApp,ApiGateway,"REST API")
+
+Rel(UserManagement,Config,"")
+Rel(DeviceManagement,Config,"")
+Rel(ScenarioEngine,Config,"")
+Rel(UserManagement,Config,"")
+Rel(Telemetry,Config,"")
+
+Rel(ApiGateway,MessageBroker,"Rest Api")
+Rel(MessageBroker,GatewaySevice,"Команды управления приборами")
+Rel(GatewaySevice,ApiGateway,"Телеметрия")
+Rel(GatewayVideo,VideoProcessing,"Сжатие и сохранение видео")
+
+Rel(MessageBroker,DeviceManagement,"Операции REST API")
+Rel(MessageBroker,ScenarioEngine,"Операции REST API")
+Rel(MessageBroker,UserManagement,"Операции REST API")
+Rel(MessageBroker,Telemetry,"Операции REST API")
+@enduml

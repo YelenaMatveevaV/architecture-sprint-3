@@ -1,6 +1,6 @@
 
 @startuml
-' Сущности
+
 entity User {
   *id (PK)
   --
@@ -20,18 +20,36 @@ entity Role {
 entity Device {
   *id (PK)
   --
-  type
-  vendor
+  type_id (FK)
   status
+  vendor
+  created_at
+}
+
+entity Place {
+  *id (PK)
+  --
+  user_id (FK)
+  name
+  square
+  height
+  created_at
+}
+
+entity DeviceType {
+  *id (PK)
+  --
+  type
   protocol
   created_at
 }
 
-entity User_Device {
-  *user_id (FK)
+entity Place_Device {
+  *place_id (FK)
   *device_id (FK)
   --
-  is_owner
+  date_from
+  date_to
 }
 
 entity TelemetryData {
@@ -50,7 +68,7 @@ entity Event {
   device_id (FK)
   user_id (FK)
   timestamp
-  dataload
+  payload
 }
 
 entity ScenarioExecution {
@@ -85,19 +103,21 @@ entity AuditLog {
 
 ' Связи
 User }|--|| Role : "role_id"
-User_Device }o--|| User : "user_id"
-User_Device }o--|| Device : "device_id"
+User ||--o{ Place : "user_id"
+Place_Device }o--|| Place : "user_id"
+Place_Device }o--|| Device : "device_id"
 Device ||--o{ TelemetryData : "device_id"
 Device ||--o{ Event : "device_id"
+DeviceType ||--o{ Device : "type_id
 User ||--o{ Event : "user_id"
 Event ||--o{ ScenarioExecution : "trigger_event_id"
 User ||--o{ Notification : "user_id"
 User ||--o{ AuditLog : "user_id"
 
 
-note top of User_Device
+note top of Place_Device
   Многие-ко-многим между
-  User и Device
+  Place и Device
 end note
 
 note right of TelemetryData
